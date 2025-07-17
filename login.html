@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budzee Admin Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .logo h1 {
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fdf2f2;
+            border: 1px solid #fecaca;
+        }
+        .success {
+            color: #27ae60;
+            background: #f0f9f4;
+            border: 1px solid #bbf7d0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .quick-login {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .quick-btn {
+            flex: 1;
+            padding: 8px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .quick-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-gamepad"></i>
+            <h1>Budzee Admin</h1>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </form>
+        
+        <div class="quick-login">
+            <button class="quick-btn" onclick="quickLogin('admin')">Quick Admin</button>
+            <button class="quick-btn" onclick="quickLogin('superadmin')">Quick Superadmin</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Logging in...</span>
+        </div>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        
+        function showMessage(text, type = 'error') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+        }
+        
+        function hideMessage() {
+            document.getElementById('message').style.display = 'none';
+        }
+        
+        function quickLogin(username) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = 'password';
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        }
+        
+        async function performLogin(username, password) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loading');
+            
+            console.log(`Attempting login for: ${username}`);
+            
+            // Validate inputs
+            if (!username || !password) {
+                showMessage('Please enter both username and password', 'error');
+                return;
+            }
+            
+            // Clear previous messages
+            hideMessage();
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                console.log('Making login request...');
+                
+                const response = await fetch(`${API_BASE_URL}/admin-auth/login`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                if (data.success) {
+                    console.log('Login successful!');
+                    localStorage.setItem('adminToken', data.token);
+                    
+                    showMessage(`Welcome ${data.user.username}! Redirecting...`, 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    console.log('Login failed:', data.message);
+                    showMessage(data.message || 'Login failed', 'error');
+                }
+                
+            } catch (err) {
+                console.error('Login error:', err);
+                showMessage(`Connection error: ${err.message}`, 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Form submission handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            await performLogin(username, password);
+        });
+        
+        // Check for existing token on page load
+        window.addEventListener('load', async () => {
+            console.log('Page loaded, checking for existing token...');
+            
+            const existingToken = localStorage.getItem('adminToken');
+            if (existingToken) {
+                console.log('Found existing token, verifying...');
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin-auth/verify`, {
+                        headers: { 'Authorization': `Bearer ${existingToken}` }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log('Token valid, redirecting...');
+                        showMessage('Already logged in, redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        console.log('Token invalid, removing...');
+                        localStorage.removeItem('adminToken');
+                    }
+                } catch (err) {
+                    console.log('Token verification failed:', err);
+                    localStorage.removeItem('adminToken');
+                }
+            }
+        });
+        
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('JavaScript Error:', e.error);
+            showMessage('A JavaScript error occurred. Check console for details.', 'error');
+        });
+        
+        console.log('Login page initialized');
+        console.log('API Base URL:', API_BASE_URL);
+    </script>
+</body>
+</html>

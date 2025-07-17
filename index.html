@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budzee Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Budzee Admin</span>
+                </div>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-section="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-section="users">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </li>
+                <li class="menu-item" data-section="games">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Games</span>
+                </li>
+                <li class="menu-item" data-section="transactions">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Transactions</span>
+                </li>
+                <li class="menu-item" data-section="withdrawals">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Withdrawals</span>
+                </li>
+                <li class="menu-item" data-section="bots">
+                    <i class="fas fa-robot"></i>
+                    <span>Bot Management</span>
+                </li>
+                <li class="menu-item" data-section="feedback">
+                    <i class="fas fa-comments"></i>
+                    <span>Feedback</span>
+                </li>
+                <li class="menu-item" data-section="website">
+                    <i class="fas fa-globe"></i>
+                    <span>Website Data</span>
+                </li>
+                <li class="menu-item" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </li>
+                <li class="menu-item" data-section="updates">
+                    <i class="fas fa-download"></i>
+                    <span>App Updates</span>
+                </li>
+                <li class="menu-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button onclick="adminPanel.logout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search...">
+                    </div>
+                    <div class="admin-profile">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-users">0</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon games">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-games">0</h3>
+                                <p>Total Games</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-revenue">₹0</h3>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bots">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="active-bots">0</h3>
+                                <p>Active Bots</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts">
+                        <div class="chart-container">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-list" id="recent-activity">
+                                <!-- Activity items will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h3>System Status</h3>
+                            <div class="system-status" id="system-status">
+                                <!-- System status will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users" class="content-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                        <button class="btn btn-primary" onclick="adminPanel.showAddUserModal()">
+                            <i class="fas fa-plus"></i> Add User
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Games Section -->
+                <section id="games" class="content-section">
+                    <div class="section-header">
+                        <h2>Game Management</h2>
+                        <div class="filter-controls">
+                            <select id="game-status-filter">
+                                <option value="">All Status</option>
+                                <option value="WAITING">Waiting</option>
+                                <option value="PLAYING">Playing</option>
+                                <option value="FINISHED">Finished</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="games-table">
+                            <thead>
+                                <tr>
+                                    <th>Game ID</th>
+                                    <th>Type</th>
+                                    <th>Players</th>
+                                    <th>Entry Fee</th>
+                                    <th>Prize Pool</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Games will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Transactions Section -->
+                <section id="transactions" class="content-section">
+                    <div class="section-header">
+                        <h2>Transaction Management</h2>
+                        <div class="filter-controls">
+                            <select id="transaction-type-filter">
+                                <option value="">All Types</option>
+                                <option value="DEPOSIT">Deposit</option>
+                                <option value="WITHDRAWAL">Withdrawal</option>
+                                <option value="GAME_ENTRY">Game Entry</option>
+                                <option value="GAME_WINNING">Game Winning</option>
+                                <option value="REFUND">Refund</option>
+                            </select>
+                            <select id="transaction-status-filter">
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="FAILED">Failed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Transactions will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Withdrawals Section -->
+                <section id="withdrawals" class="content-section">
+                    <div class="section-header">
+                        <h2>Withdrawal Management</h2>
+                        <div class="filter-controls">
+                            <select id="withdrawal-status-filter">
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="APPROVED">Approved</option>
+                                <option value="PROCESSING">Processing</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="withdrawals-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Withdrawals will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Bot Management Section -->
+                <section id="bots" class="content-section">
+                    <div class="section-header">
+                        <h2>Bot Management</h2>
+                        <button class="btn btn-primary" onclick="adminPanel.createBot()">
+                            <i class="fas fa-plus"></i> Create Bot
+                        </button>
+                    </div>
+                    <div class="bot-stats">
+                        <div class="bot-stat-card">
+                            <h4>Total Bots</h4>
+                            <span id="bot-total">0</span>
+                        </div>
+                        <div class="bot-stat-card">
+                            <h4>Active Bots</h4>
+                            <span id="bot-active">0</span>
+                        </div>
+                        <div class="bot-stat-card">
+                            <h4>Bots in Queue</h4>
+                            <span id="bot-queue">0</span>
+                        </div>
+                        <div class="bot-stat-card">
+                            <h4>Bots in Games</h4>
+                            <span id="bot-games">0</span>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="bots-table">
+                            <thead>
+                                <tr>
+                                    <th>Bot ID</th>
+                                    <th>Name</th>
+                                    <th>Games Played</th>
+                                    <th>Win Rate</th>
+                                    <th>Status</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Bots will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Feedback Section -->
+                <section id="feedback" class="content-section">
+                    <div class="section-header">
+                        <h2>Feedback Management</h2>
+                        <div class="filter-controls">
+                            <select id="feedback-status-filter">
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="REVIEWED">Reviewed</option>
+                                <option value="RESOLVED">Resolved</option>
+                                <option value="CLOSED">Closed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="feedback-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Feedback will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Website Data Section -->
+                <section id="website" class="content-section">
+                    <div class="section-header">
+                        <h2>Website Data Management</h2>
+                        <div class="filter-controls">
+                            <select id="website-data-filter">
+                                <option value="">All Data</option>
+                                <option value="contact">Contact Submissions</option>
+                                <option value="feedback">Website Feedback</option>
+                                <option value="newsletter">Newsletter Subscriptions</option>
+                                <option value="downloads">Download Tracking</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-contacts">0</h3>
+                                <p>Contact Submissions</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon games">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-website-feedback">0</h3>
+                                <p>Website Feedback</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-newspaper"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-subscribers">0</h3>
+                                <p>Newsletter Subscribers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bots">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-downloads">0</h3>
+                                <p>App Downloads</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="website-data-table">
+                            <thead id="website-table-header">
+                                <!-- Headers will be dynamically updated based on selected data type -->
+                            </thead>
+                            <tbody>
+                                <!-- Website data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section id="analytics" class="content-section">
+                    <div class="section-header">
+                        <h2>Analytics & Reports</h2>
+                        <div class="filter-controls">
+                            <select id="analytics-period">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month" selected>This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="adminPanel.exportReport()">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="chart-container">
+                            <h3>User Growth</h3>
+                            <div class="chart-placeholder" id="user-growth-chart">
+                                <div class="analytics-summary">
+                                    <div class="metric">
+                                        <span class="metric-value" id="new-users">0</span>
+                                        <span class="metric-label">New Users</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="active-users">0</span>
+                                        <span class="metric-label">Active Users</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="retention-rate">0%</span>
+                                        <span class="metric-label">Retention Rate</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Revenue Analytics</h3>
+                            <div class="chart-placeholder" id="revenue-chart">
+                                <div class="analytics-summary">
+                                    <div class="metric">
+                                        <span class="metric-value" id="total-deposits">₹0</span>
+                                        <span class="metric-label">Total Deposits</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="total-withdrawals">₹0</span>
+                                        <span class="metric-label">Total Withdrawals</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="net-revenue">₹0</span>
+                                        <span class="metric-label">Net Revenue</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Game Analytics</h3>
+                            <div class="chart-placeholder" id="game-analytics">
+                                <div class="analytics-summary">
+                                    <div class="metric">
+                                        <span class="metric-value" id="games-played">0</span>
+                                        <span class="metric-label">Games Played</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="avg-game-duration">0m</span>
+                                        <span class="metric-label">Avg Duration</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="popular-game-type">N/A</span>
+                                        <span class="metric-label">Popular Game</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <h3>Bot Performance</h3>
+                            <div class="chart-placeholder" id="bot-performance">
+                                <div class="analytics-summary">
+                                    <div class="metric">
+                                        <span class="metric-value" id="bot-games-played">0</span>
+                                        <span class="metric-label">Bot Games</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="bot-win-rate">0%</span>
+                                        <span class="metric-label">Bot Win Rate</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-value" id="bot-efficiency">0%</span>
+                                        <span class="metric-label">Bot Efficiency</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <h3>Top Performing Users</h3>
+                        <table class="data-table" id="top-users-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Games Played</th>
+                                    <th>Win Rate</th>
+                                    <th>Total Winnings</th>
+                                    <th>Deposits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Top users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- App Updates Section -->
+                <section id="updates" class="content-section">
+                    <div class="section-header">
+                        <h2>App Update Management</h2>
+                        <button class="btn btn-primary" onclick="adminPanel.showPublishUpdateModal()">
+                            <i class="fas fa-upload"></i> Publish Update
+                        </button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="current-version">1.0.0</h3>
+                                <p>Current Version</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon games">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="last-update">Never</h3>
+                                <p>Last Update</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="update-type">N/A</h3>
+                                <p>Update Type</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bots">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="apk-size">0 MB</h3>
+                                <p>APK Size</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <h3>Update History</h3>
+                        <table class="data-table" id="updates-table">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Published</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Update history will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="content-section">
+                    <div class="section-header">
+                        <h2>System Settings</h2>
+                    </div>
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>Game Settings</h3>
+                            <div class="setting-item">
+                                <label>Minimum Entry Fee</label>
+                                <input type="number" id="min-entry-fee" value="5">
+                            </div>
+                            <div class="setting-item">
+                                <label>Maximum Entry Fee</label>
+                                <input type="number" id="max-entry-fee" value="1000">
+                            </div>
+                            <button class="btn btn-primary">Save Game Settings</button>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Bot Settings</h3>
+                            <div class="setting-item">
+                                <label>Minimum Bots</label>
+                                <input type="number" id="min-bots" value="10">
+                            </div>
+                            <div class="setting-item">
+                                <label>Bot Win Rate Target</label>
+                                <input type="number" id="bot-win-rate" value="50" min="0" max="100">
+                            </div>
+                            <button class="btn btn-primary">Save Bot Settings</button>
+                        </div>
+                        <div class="settings-card">
+                            <h3>System Maintenance</h3>
+                            <div class="setting-item">
+                                <label>Maintenance Mode</label>
+                                <select id="maintenance-mode">
+                                    <option value="false">Disabled</option>
+                                    <option value="true">Enabled</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Maintenance Message</label>
+                                <textarea id="maintenance-message" placeholder="System is under maintenance..."></textarea>
+                            </div>
+                            <button class="btn btn-warning">Update Maintenance</button>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Database Operations</h3>
+                            <div class="setting-item">
+                                <button class="btn btn-info" onclick="adminPanel.backupDatabase()">
+                                    <i class="fas fa-database"></i> Backup Database
+                                </button>
+                            </div>
+                            <div class="setting-item">
+                                <button class="btn btn-warning" onclick="adminPanel.clearLogs()">
+                                    <i class="fas fa-trash"></i> Clear Logs
+                                </button>
+                            </div>
+                            <div class="setting-item">
+                                <button class="btn btn-danger" onclick="adminPanel.resetSystem()">
+                                    <i class="fas fa-exclamation-triangle"></i> Reset System
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Load environment configuration first -->
+    <script src="env-config.js"></script>
+    <!-- Then load the main admin panel -->
+    <script src="admin-panel-complete.js"></script>
+</body>
+</html>
