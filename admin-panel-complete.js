@@ -1,3 +1,4 @@
+//
 // Complete Admin Panel with Full Update Management System
 class BudzeeAdminPanel {
     constructor() {
@@ -63,7 +64,19 @@ class BudzeeAdminPanel {
                 
                 if (data.success) {
                     this.authToken = token;
-                    
+                    this.adminRole = data.user.role;
+                    // Show Administration section if superadmin
+                    if (this.adminRole && this.adminRole.toLowerCase() === 'superadmin') {
+                        const adminMenuItem = document.querySelector('[data-section="administration"]');
+                        const adminSection = document.getElementById('administration');
+                        if (adminMenuItem) adminMenuItem.style.display = '';
+                        if (adminSection) adminSection.style.display = '';
+                    } else {
+                        const adminMenuItem = document.querySelector('[data-section="administration"]');
+                        const adminSection = document.getElementById('administration');
+                        if (adminMenuItem) adminMenuItem.style.display = 'none';
+                        if (adminSection) adminSection.style.display = 'none';
+                    }
                     // Update header with admin info
                     const profileElement = document.querySelector('.admin-profile span');
                     if (profileElement) {
@@ -176,6 +189,7 @@ class BudzeeAdminPanel {
         const titles = {
             dashboard: 'Dashboard',
             users: 'User Management',
+            referrals: 'Referral Management',
             games: 'Game Management',
             transactions: 'Transaction Management',
             withdrawals: 'Withdrawal Management',
@@ -184,6 +198,7 @@ class BudzeeAdminPanel {
             website: 'Website Data Management',
             analytics: 'Analytics & Reports',
             updates: 'App Update Management',
+            administration: 'Admin Management',
             settings: 'System Settings'
         };
         document.querySelector('.page-title').textContent = titles[section];
@@ -193,6 +208,10 @@ class BudzeeAdminPanel {
 
         // Load section data
         this.loadSectionData(section);
+        // Special: load admins if administration section
+        if (section === 'administration') {
+            this.loadAdmins();
+        }
     }
 
     loadSectionData(section) {
@@ -202,6 +221,9 @@ class BudzeeAdminPanel {
                 break;
             case 'users':
                 this.loadUsers();
+                break;
+            case 'referrals':
+                this.loadReferrals();
                 break;
             case 'games':
                 this.loadGames();
@@ -325,320 +347,21 @@ class BudzeeAdminPanel {
         `).join('');
     }
 
-    // ==================== UPDATE MANAGEMENT SYSTEM ====================
+    // ==================== API METHODS ====================
 
-    async loadUpdates() {
+    async fetchAPI(endpoint, options = {}) {
         try {
-            this.showLoading();
-            console.log('Loading updates...');
-
-            // Load current version and update history
-            const [versionData, historyData] = await Promise.all([
-                this.fetchUpdateAPI('/latest-version.json'),
-                this.fetchUpdateAPI('/history')
-            ]);
-
-            console.log('Version data:', versionData);
-            console.log('History data:', historyData);
-
-            // Update current version stats
-            if (versionData) {
-                document.getElementById('current-version').textContent = versionData.version || '1.0.0';
-                document.getElementById('last-update').textContent = versionData.publishedAt 
-                    ? this.formatDate(versionData.publishedAt) 
-                    : 'Never';
-                document.getElementById('update-type').textContent = versionData.type || 'N/A';
-                document.getElementById('apk-size').textContent = versionData.fileSize 
-                    ? this.formatFileSize(versionData.fileSize) 
-                    : '0 MB';
-            }
-
-            // Load update history table
-            this.renderUpdatesTable(historyData);
-
-        } catch (error) {
-            console.error('Error loading updates:', error);
-            this.showError('Failed to load update data');
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    renderUpdatesTable(historyData) {
-        const tbody = document.querySelector('#updates-table tbody');
-        
-        if (historyData?.success && historyData.history) {
-            tbody.innerHTML = historyData.history.map(update => `
-                <tr>
-                    <td>${this.extractVersionFromFilename(update.filename)}</td>
-                    <td>
-                        <span class="status-badge status-${update.isCurrent ? 'active' : 'inactive'}">
-                            ${update.isCurrent ? 'Current' : 'Previous'}
-                        </span>
-                    </td>
-                    <td>${this.formatFileSize(update.size)}</td>
-                    <td>${this.formatDate(update.createdAt)}</td>
-                    <td>
-                        <span class="status-badge status-active">Published</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-small btn-secondary" onclick="adminPanel.downloadUpdate('${update.filename}')">
-                                <i class="fas fa-download"></i> Download
-                            </button>
-                            ${!update.isCurrent ? `
-                                <button class="btn btn-small btn-warning" onclick="adminPanel.rollbackUpdate('${update.filename}')">
-                                    <i class="fas fa-undo"></i> Rollback
-                                </button>
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        } else {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">No updates found</td>
-                </tr>
-            `;
-        }
-    }
-
-    showPublishUpdateModal() {
-        const modalContent = `
-            <form id="publish-update-form" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="update-version">Version Number *</label>
-                    <input type="text" id="update-version" name="version" required 
-                           placeholder="e.g., 1.2.0" pattern="[0-9]+\\.[0-9]+\\.[0-9]+">
-                    <small>Format: Major.Minor.Patch (e.g., 1.2.0)</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="update-type">Update Type *</label>
-                    <select id="update-type" name="type" required>
-                        <option value="">Select update type</option>
-                        <option value="optional">Optional Update</option>
-                        <option value="mandatory">Mandatory Update</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="update-notes">Release Notes *</label>
-                    <textarea id="update-notes" name="notes" required rows="4" 
-                              placeholder="Describe what's new in this version..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="apk-file">APK File *</label>
-                    <input type="file" id="apk-file" name="apk" accept=".apk" required>
-                    <small>Maximum file size: 100MB. Only .apk files are allowed.</small>
-                    <div id="file-info" class="file-info" style="display: none;">
-                        <span id="file-name"></span>
-                        <span id="file-size"></span>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="upload-progress" id="upload-progress" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
-                        </div>
-                        <span class="progress-text" id="progress-text">0%</span>
-                    </div>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="adminPanel.closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="publish-btn">
-                        <i class="fas fa-upload"></i> Publish Update
-                    </button>
-                </div>
-            </form>
-        `;
-
-        this.showModal('Publish New Update', modalContent);
-
-        // Setup file input handler
-        const fileInput = document.getElementById('apk-file');
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('file-name').textContent = file.name;
-                document.getElementById('file-size').textContent = this.formatFileSize(file.size);
-                document.getElementById('file-info').style.display = 'block';
-            } else {
-                document.getElementById('file-info').style.display = 'none';
-            }
-        });
-
-        // Setup form submission
-        document.getElementById('publish-update-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.publishUpdate();
-        });
-    }
-
-    async publishUpdate() {
-        try {
-            const form = document.getElementById('publish-update-form');
-            const formData = new FormData(form);
-            
-            // Validate form
-            const version = formData.get('version');
-            const type = formData.get('type');
-            const notes = formData.get('notes');
-            const apkFile = formData.get('apk');
-
-            if (!version || !type || !notes || !apkFile) {
-                this.showError('Please fill in all required fields');
-                return;
-            }
-
-            // Validate version format
-            const versionRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
-            if (!versionRegex.test(version)) {
-                this.showError('Version must be in format: Major.Minor.Patch (e.g., 1.2.0)');
-                return;
-            }
-
-            // Validate file size (100MB limit)
-            if (apkFile.size > 100 * 1024 * 1024) {
-                this.showError('APK file size must be less than 100MB');
-                return;
-            }
-
-            // Show progress
-            document.getElementById('upload-progress').style.display = 'block';
-            document.getElementById('publish-btn').disabled = true;
-            document.getElementById('publish-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-
-            // Create XMLHttpRequest for progress tracking
-            const xhr = new XMLHttpRequest();
-            
-            // Track upload progress
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = (e.loaded / e.total) * 100;
-                    document.getElementById('progress-fill').style.width = percentComplete + '%';
-                    document.getElementById('progress-text').textContent = Math.round(percentComplete) + '%';
-                }
-            });
-
-            // Handle response
-            xhr.addEventListener('load', () => {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    
-                    if (xhr.status === 200 && response.success) {
-                        this.showSuccess('Update published successfully!');
-                        this.closeModal();
-                        this.loadUpdates(); // Refresh the updates list
-                    } else {
-                        this.showError(response.message || 'Failed to publish update');
-                    }
-                } catch (error) {
-                    this.showError('Invalid response from server');
-                }
-                
-                // Reset form
-                document.getElementById('publish-btn').disabled = false;
-                document.getElementById('publish-btn').innerHTML = '<i class="fas fa-upload"></i> Publish Update';
-                document.getElementById('upload-progress').style.display = 'none';
-            });
-
-            xhr.addEventListener('error', () => {
-                this.showError('Network error occurred while uploading');
-                document.getElementById('publish-btn').disabled = false;
-                document.getElementById('publish-btn').innerHTML = '<i class="fas fa-upload"></i> Publish Update';
-                document.getElementById('upload-progress').style.display = 'none';
-            });
-
-            // Send request
-            xhr.open('POST', `${this.baseURL}/updates/publish-update`);
-            xhr.setRequestHeader('Authorization', `Bearer ${this.authToken}`);
-            xhr.send(formData);
-
-        } catch (error) {
-            console.error('Error publishing update:', error);
-            this.showError('Failed to publish update');
-            
-            // Reset form
-            document.getElementById('publish-btn').disabled = false;
-            document.getElementById('publish-btn').innerHTML = '<i class="fas fa-upload"></i> Publish Update';
-            document.getElementById('upload-progress').style.display = 'none';
-        }
-    }
-
-    downloadUpdate(filename) {
-        const downloadUrl = `${this.baseURL}/apks/${filename}`;
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        this.showSuccess('Download started');
-    }
-
-    async rollbackUpdate(filename) {
-        if (!confirm(`Are you sure you want to rollback to ${filename}? This will make it the current version.`)) {
-            return;
-        }
-
-        try {
-            this.showLoading();
-            
-            // Extract version from filename
-            const version = this.extractVersionFromFilename(filename);
-            
-            // Create rollback data
-            const rollbackData = {
-                version: version,
-                type: 'optional',
-                notes: `Rollback to version ${version}`,
-                filename: filename
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(this.authToken && { 'Authorization': `Bearer ${this.authToken}` }),
+                ...options.headers
             };
 
-            const response = await fetch(`${this.baseURL}/updates/rollback`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
-                },
-                body: JSON.stringify(rollbackData)
+            const response = await fetch(`${this.apiURL}${endpoint}`, {
+                ...options,
+                headers
             });
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showSuccess('Successfully rolled back to previous version');
-                this.loadUpdates();
-            } else {
-                this.showError(data.message || 'Failed to rollback update');
-            }
-
-        } catch (error) {
-            console.error('Error rolling back update:', error);
-            this.showError('Failed to rollback update');
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    // ==================== UTILITY METHODS ====================
-
-    async fetchUpdateAPI(endpoint) {
-        try {
-            const headers = {};
-            
-            // Add auth token for admin endpoints
-            if (this.authToken && endpoint !== '/latest-version.json') {
-                headers['Authorization'] = `Bearer ${this.authToken}`;
-            }
-            
-            const response = await fetch(`${this.baseURL}/updates${endpoint}`, { headers });
-            
             if (!response.ok) {
                 if (response.status === 401) {
                     this.logout();
@@ -646,170 +369,369 @@ class BudzeeAdminPanel {
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             return await response.json();
         } catch (error) {
-            console.error(`Update API Error for ${endpoint}:`, error);
-            return null;
+            console.error(`API Error for ${endpoint}:`, error);
+            throw error;
         }
     }
 
-    extractVersionFromFilename(filename) {
-        // Extract version from filename like "Budzee-v1.2.0.apk"
-        const match = filename.match(/v?([0-9]+\.[0-9]+\.[0-9]+)/);
-        return match ? match[1] : 'Unknown';
-    }
+    // ==================== ADMIN MANAGEMENT METHODS ====================
 
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    }
-
-    // ==================== OTHER SECTION METHODS ====================
-
-    async loadUsers(page = 1, search = '', status = '') {
+    async loadAdmins() {
         try {
             this.showLoading();
             
-            const params = new URLSearchParams({
-                page,
-                limit: this.itemsPerPage,
-                ...(search && { search }),
-                ...(status && { status })
-            });
-
-            const data = await this.fetchAPI(`/admin/users?${params}`);
+            const data = await this.fetchAPI('/admin-auth/admins');
             
             if (data?.success) {
-                this.renderUsersTable(data.users || []);
-                this.renderPagination(data.pagination, 'users');
+                this.renderAdminsTable(data.admins || []);
             } else {
-                console.warn('API failed, loading mock user data');
-                const mockUsers = this.generateMockUsers();
-                this.renderUsersTable(mockUsers);
-                this.showError('API connection failed - showing demo data');
+                this.showError('Failed to load admins');
             }
 
         } catch (error) {
-            console.error('Error loading users:', error);
-            const mockUsers = this.generateMockUsers();
-            this.renderUsersTable(mockUsers);
-            this.showError('Failed to load users - showing demo data');
+            console.error('Error loading admins:', error);
+            this.showError('Failed to load admins');
         } finally {
             this.hideLoading();
         }
     }
 
-    generateMockUsers() {
-        const mockUsers = [];
-        for (let i = 1; i <= 10; i++) {
-            mockUsers.push({
-                id: `mock-user-${i}`,
-                name: `Demo User ${i}`,
-                phoneNumber: `+91${9000000000 + i}`,
-                email: `user${i}@demo.com`,
-                isVerified: i % 2 === 0,
-                balance: Math.floor(Math.random() * 1000),
-                gameBalance: Math.floor(Math.random() * 500),
-                withdrawableBalance: Math.floor(Math.random() * 300),
-                referralCode: `REF${i.toString().padStart(3, '0')}`,
-                createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-            });
-        }
-        return mockUsers;
-    }
+    renderAdminsTable(admins) {
+        const tbody = document.querySelector('#admins-table tbody');
+        if (!tbody) return;
 
-    renderUsersTable(users) {
-        const tbody = document.querySelector('#users-table tbody');
-        tbody.innerHTML = users.map(user => `
+        tbody.innerHTML = admins.map(admin => `
             <tr>
                 <td>
                     <div class="user-id-cell">
-                        <span class="id-short">${user.id.slice(0, 8)}...</span>
-                        <button class="btn-copy" onclick="adminPanel.copyToClipboard('${user.id}')" title="Copy full ID">
+                        <span class="id-short">${admin.id.slice(0, 8)}...</span>
+                        <button class="btn-copy" onclick="adminPanel.copyToClipboard('${admin.id}')" title="Copy full ID">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                 </td>
                 <td>
-                    <div class="user-info">
-                        <strong>${user.name || 'N/A'}</strong>
-                        ${user.isBot ? '<span class="bot-badge">BOT</span>' : ''}
-                        ${user.referralCode ? `<div class="referral-code">Ref: ${user.referralCode}</div>` : ''}
+                    <div class="admin-info">
+                        <strong>${admin.username}</strong>
+                        ${admin.role.toLowerCase() === 'superadmin' ? '<span class="superadmin-badge">SUPER</span>' : ''}
                     </div>
                 </td>
-                <td>${user.phoneNumber}</td>
-                <td>${user.email || 'N/A'}</td>
+                <td>${admin.email}</td>
                 <td>
-                    <div class="balance-info">
-                        <div>Total: ₹${user.balance || 0}</div>
-                        <div class="balance-breakdown">
-                            Game: ₹${user.gameBalance || 0} | 
-                            Withdrawable: ₹${user.withdrawableBalance || 0}
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge status-${user.isVerified ? 'active' : 'inactive'}">
-                        ${user.isVerified ? 'Verified' : 'Unverified'}
+                    <span class="role-badge role-${admin.role.toLowerCase()}">
+                        ${admin.role}
                     </span>
                 </td>
+                <td>${new Date(admin.createdAt).toLocaleDateString()}</td>
+                <td>${new Date(admin.updatedAt).toLocaleDateString()}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn btn-small btn-secondary" onclick="adminPanel.viewUser('${user.id}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="btn btn-small btn-primary" onclick="adminPanel.editUser('${user.id}')">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
+                        ${admin.role.toLowerCase() !== 'superadmin' ? `
+                            <button class="btn btn-small btn-primary" onclick="adminPanel.editAdmin('${admin.id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-small btn-warning" onclick="adminPanel.resetAdminPassword('${admin.id}')">
+                                <i class="fas fa-key"></i> Reset Password
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="adminPanel.deleteAdmin('${admin.id}', '${admin.username}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : '<span class="text-muted">Protected</span>'}
                     </div>
                 </td>
             </tr>
         `).join('');
-    }
 
-    // API Helper Methods
-    async fetchAPI(endpoint, options = {}) {
-        try {
-            const headers = {
-                'Content-Type': 'application/json',
-                ...options.headers
-            };
-            
-            // Add auth token for admin endpoints
-            if (endpoint.startsWith('/admin') && this.authToken) {
-                headers['Authorization'] = `Bearer ${this.authToken}`;
-            }
-            
-            const response = await fetch(`${this.apiURL}${endpoint}`, {
-                headers,
-                ...options
-            });
-            
-            if (!response.ok) {
-                if (response.status === 401) {
-                    this.logout();
-                    return null;
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error(`API Error for ${endpoint}:`, error);
-            return null;
+        // Setup add admin button
+        const addAdminBtn = document.getElementById('add-admin-btn');
+        if (addAdminBtn) {
+            addAdminBtn.onclick = () => this.showAddAdminModal();
         }
     }
 
-    // Utility Methods
+    showAddAdminModal() {
+        const modalContent = `
+            <form id="add-admin-form">
+                <div class="form-group">
+                    <label for="admin-username">Username *</label>
+                    <input type="text" id="admin-username" name="username" required 
+                           placeholder="Enter admin username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-email">Email *</label>
+                    <input type="email" id="admin-email" name="email" required 
+                           placeholder="Enter admin email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-password">Password *</label>
+                    <input type="password" id="admin-password" name="password" required 
+                           placeholder="Enter admin password" minlength="6">
+                    <small>Password must be at least 6 characters long</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-role">Role *</label>
+                    <select id="admin-role" name="role" required>
+                        <option value="">Select role</option>
+                        <option value="admin">Admin</option>
+                        <option value="moderator">Moderator</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Admin
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="adminPanel.closeModal()">Cancel</button>
+                </div>
+            </form>
+        `;
+
+        this.showModal('Add New Admin', modalContent);
+
+        document.getElementById('add-admin-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.createAdmin();
+        });
+    }
+
+    async createAdmin() {
+        try {
+            const formData = {
+                username: document.getElementById('admin-username').value,
+                email: document.getElementById('admin-email').value,
+                password: document.getElementById('admin-password').value,
+                role: document.getElementById('admin-role').value
+            };
+
+            this.showLoading();
+            const data = await this.fetchAPI('/admin-auth/admins', {
+                method: 'POST',
+                body: JSON.stringify(formData)
+            });
+
+            if (data?.success) {
+                this.showSuccess('Admin created successfully');
+                this.closeModal();
+                this.loadAdmins();
+            } else {
+                this.showError(data?.message || 'Failed to create admin');
+            }
+        } catch (error) {
+            console.error('Error creating admin:', error);
+            this.showError('Failed to create admin');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async editAdmin(adminId) {
+        try {
+            this.showLoading();
+            
+            // Get current admin data
+            const admins = await this.fetchAPI('/admin-auth/admins');
+            const admin = admins.admins?.find(a => a.id === adminId);
+            
+            if (!admin) {
+                this.showError('Admin not found');
+                return;
+            }
+
+            const modalContent = `
+                <form id="edit-admin-form">
+                    <div class="form-group">
+                        <label for="edit-admin-username">Username *</label>
+                        <input type="text" id="edit-admin-username" name="username" required 
+                               value="${admin.username}" placeholder="Enter admin username">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-admin-email">Email *</label>
+                        <input type="email" id="edit-admin-email" name="email" required 
+                               value="${admin.email}" placeholder="Enter admin email">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-admin-role">Role *</label>
+                        <select id="edit-admin-role" name="role" required>
+                            <option value="admin" ${admin.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="moderator" ${admin.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Admin
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="adminPanel.closeModal()">Cancel</button>
+                    </div>
+                </form>
+            `;
+
+            this.showModal(`Edit Admin - ${admin.username}`, modalContent);
+
+            document.getElementById('edit-admin-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.updateAdmin(adminId);
+            });
+
+        } catch (error) {
+            console.error('Error loading admin for edit:', error);
+            this.showError('Failed to load admin details');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async updateAdmin(adminId) {
+        try {
+            const formData = {
+                username: document.getElementById('edit-admin-username').value,
+                email: document.getElementById('edit-admin-email').value,
+                role: document.getElementById('edit-admin-role').value
+            };
+
+            this.showLoading();
+            const data = await this.fetchAPI(`/admin-auth/admins/${adminId}`, {
+                method: 'PUT',
+                body: JSON.stringify(formData)
+            });
+
+            if (data?.success) {
+                this.showSuccess('Admin updated successfully');
+                this.closeModal();
+                this.loadAdmins();
+            } else {
+                this.showError(data?.message || 'Failed to update admin');
+            }
+        } catch (error) {
+            console.error('Error updating admin:', error);
+            this.showError('Failed to update admin');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async resetAdminPassword(adminId) {
+        const newPassword = prompt('Enter new password for this admin (minimum 6 characters):');
+        
+        if (!newPassword) {
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            this.showError('Password must be at least 6 characters long');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to reset this admin\'s password?')) {
+            return;
+        }
+
+        try {
+            this.showLoading();
+            const data = await this.fetchAPI(`/admin-auth/admins/${adminId}/reset-password`, {
+                method: 'POST',
+                body: JSON.stringify({ newPassword })
+            });
+
+            if (data?.success) {
+                this.showSuccess('Password reset successfully');
+                this.loadAdmins();
+            } else {
+                this.showError(data?.message || 'Failed to reset password');
+            }
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            this.showError('Failed to reset password');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async deleteAdmin(adminId, adminUsername) {
+        if (!confirm(`Are you sure you want to delete admin "${adminUsername}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            this.showLoading();
+            const data = await this.fetchAPI(`/admin-auth/admins/${adminId}`, {
+                method: 'DELETE'
+            });
+
+            if (data?.success) {
+                this.showSuccess('Admin deleted successfully');
+                this.loadAdmins();
+            } else {
+                this.showError(data?.message || 'Failed to delete admin');
+            }
+        } catch (error) {
+            console.error('Error deleting admin:', error);
+            this.showError('Failed to delete admin');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    // ==================== PLACEHOLDER METHODS ====================
+
+    async loadUsers() {
+        this.showError('User management section coming soon');
+    }
+
+    async loadReferrals() {
+        this.showError('Referrals section coming soon');
+    }
+
+    async loadGames() {
+        this.showError('Games section coming soon');
+    }
+
+    async loadTransactions() {
+        this.showError('Transactions section coming soon');
+    }
+
+    async loadWithdrawals() {
+        this.showError('Withdrawals section coming soon');
+    }
+
+    async loadBots() {
+        this.showError('Bot management section coming soon');
+    }
+
+    async loadFeedback() {
+        this.showError('Feedback section coming soon');
+    }
+
+    async loadWebsiteData() {
+        this.showError('Website data section coming soon');
+    }
+
+    async loadAnalytics() {
+        this.showError('Analytics section coming soon');
+    }
+
+    async loadUpdates() {
+        this.showError('Updates section coming soon');
+    }
+
+    async loadSettings() {
+        this.showError('Settings section coming soon');
+    }
+
+    handleSearch(query) {
+        console.log('Search query:', query);
+    }
+
+    // ==================== UTILITY METHODS ====================
+
     formatTimeAgo(date) {
         const now = new Date();
         const time = new Date(date);
@@ -883,26 +805,7 @@ class BudzeeAdminPanel {
             this.showSuccess('Copied to clipboard');
         }
     }
-
-    // Placeholder methods for other sections
-    async loadGames() { console.log('Loading games...'); }
-    async loadTransactions() { console.log('Loading transactions...'); }
-    async loadWithdrawals() { console.log('Loading withdrawals...'); }
-    async loadBots() { console.log('Loading bots...'); }
-    async loadFeedback() { console.log('Loading feedback...'); }
-    async loadWebsiteData() { console.log('Loading website data...'); }
-    async loadAnalytics() { console.log('Loading analytics...'); }
-    loadSettings() { console.log('Loading settings...'); }
-    
-    // Placeholder methods for user actions
-    viewUser(userId) { console.log('View user:', userId); }
-    editUser(userId) { console.log('Edit user:', userId); }
-    handleSearch(query) { console.log('Search:', query); }
-    renderPagination(pagination, section) { console.log('Pagination:', pagination, section); }
 }
 
-// Initialize admin panel when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing admin panel...');
-    window.adminPanel = new BudzeeAdminPanel();
-});
+// Create global admin panel instance
+window.adminPanel = new BudzeeAdminPanel();

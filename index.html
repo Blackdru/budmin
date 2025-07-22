@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="additional-styles.css">
 </head>
 <body>
     <div class="admin-container">
@@ -27,6 +28,10 @@
                 <li class="menu-item" data-section="users">
                     <i class="fas fa-users"></i>
                     <span>Users</span>
+                </li>
+                <li class="menu-item" data-section="referrals">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Referrals</span>
                 </li>
                 <li class="menu-item" data-section="games">
                     <i class="fas fa-gamepad"></i>
@@ -63,6 +68,10 @@
                 <li class="menu-item" data-section="settings">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
+                </li>
+                <li class="menu-item" data-section="administration" style="display:none;">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Administration</span>
                 </li>
             </ul>
             
@@ -172,12 +181,88 @@
                                     <th>Phone</th>
                                     <th>Email</th>
                                     <th>Balance</th>
+                                    <th>Games</th>
+                                    <th>Win Rate</th>
+                                    <th>Winnings</th>
+                                    <th>Referrals</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Referrals Section -->
+                <section id="referrals" class="content-section">
+                    <div class="section-header">
+                        <h2>Referral Management</h2>
+                        <div class="filter-controls">
+                            <select id="referral-sort-filter">
+                                <option value="referralCount">Most Referrals</option>
+                                <option value="referralBonusEarned">Highest Bonus</option>
+                                <option value="createdAt">Newest</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-referrers">0</h3>
+                                <p>Total Referrers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon games">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-referred-users">0</h3>
+                                <p>Total Referred Users</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-referral-bonus">₹0</h3>
+                                <p>Total Bonus Paid</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bots">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="avg-referrals-per-user">0</h3>
+                                <p>Avg Referrals/User</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="referrals-table">
+                            <thead>
+                                <tr>
+                                    <th>Referrer</th>
+                                    <th>Referral Code</th>
+                                    <th>Total Referrals</th>
+                                    <th>Bonus Earned</th>
+                                    <th>Recent Referrals</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Referrals will be loaded here -->
                             </tbody>
                         </table>
                     </div>
@@ -629,6 +714,33 @@
                     </div>
                 </section>
 
+                <!-- Administration Section (Superadmin only) -->
+                <section id="administration" class="content-section" style="display:none;">
+                    <div class="section-header">
+                        <h2>Admin Management</h2>
+                        <button class="btn btn-primary" id="add-admin-btn">
+                            <i class="fas fa-plus"></i> Add Admin
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="admins-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Admins will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
                 <!-- Settings Section -->
                 <section id="settings" class="content-section">
                     <div class="section-header">
@@ -720,5 +832,7 @@
     <script src="env-config.js"></script>
     <!-- Then load the main admin panel -->
     <script src="admin-panel-complete.js"></script>
+    <!-- Load additional methods -->
+    <script src="admin-panel-methods.js"></script>
 </body>
 </html>
