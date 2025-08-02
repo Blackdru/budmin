@@ -34,25 +34,25 @@ class EnvironmentConfig {
             isLocalhost
         });
         
-        // If accessing via file:// protocol or localhost, use development settings
+        // Always use the live server URL for production
+        this.config.SERVER_URL = 'https://test.fivlog.space';
+        this.config.API_URL = 'https://test.fivlog.space/api';
+        this.config.NODE_ENV = 'production';
+        this.config.DEBUG = false;
+        
+        // Override for local development if needed
         if (isFileProtocol || isLocalhost) {
-            // Keep development settings - always point to localhost:8080
-            this.config.SERVER_URL = 'http://localhost:8080';
-            this.config.API_URL = 'http://localhost:8080/api';
-            this.config.NODE_ENV = 'development';
-            this.config.DEBUG = true;
-        } else {
-            // Production overrides
-            this.config.NODE_ENV = 'production';
-            this.config.DEBUG = false;
-            
-            // Update URLs for production
-            const protocol = currentLocation.protocol;
-            const hostname = currentLocation.hostname;
-            const port = currentLocation.port ? `:${currentLocation.port}` : '';
-            
-            this.config.SERVER_URL = `${protocol}//${hostname}${port}`;
-            this.config.API_URL = `${protocol}//${hostname}${port}/api`;
+            // Check if we want to use local development
+            const useLocal = localStorage.getItem('useLocalDevelopment');
+            if (useLocal === 'true') {
+                this.config.SERVER_URL = 'http://localhost:8080';
+                this.config.API_URL = 'http://localhost:8080/api';
+                this.config.NODE_ENV = 'development';
+                this.config.DEBUG = true;
+                console.log('🔧 Using local development server');
+            } else {
+                console.log('🌐 Using live production server: https://test.fivlog.space');
+            }
         }
         
         console.log('Environment Config Loaded:', this.config);

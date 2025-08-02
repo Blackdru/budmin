@@ -1302,6 +1302,7 @@ pre {
 @media (max-width: 1024px) {
     .sidebar {
         transform: translateX(-100%);
+        z-index: 1001;
     }
     
     .sidebar.active {
@@ -1322,6 +1323,18 @@ pre {
     
     .search-box input {
         width: 200px;
+    }
+    
+    /* Add overlay when sidebar is open on mobile */
+    .sidebar.active::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 280px;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
     }
 }
 
