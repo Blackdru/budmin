@@ -59,6 +59,7 @@ body {
     list-style: none;
     padding: 1rem 0;
     flex: 1;
+    overflow-y: auto;
 }
 
 .menu-item {
@@ -1267,6 +1268,53 @@ pre {
     }
 }
 
+/* Connection Status Indicator */
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.connection-status.disconnected {
+    background: rgba(220, 53, 69, 0.9);
+    animation: pulse 2s infinite;
+}
+
+.connection-status i {
+    font-size: 14px;
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.active {
+    display: block;
+}
+
 /* Enhanced Print Styles */
 @media print {
     .sidebar,
@@ -1274,7 +1322,8 @@ pre {
     .action-buttons,
     .modal-overlay,
     .loading-overlay,
-    .notification {
+    .notification,
+    .connection-status {
         display: none !important;
     }
     
@@ -1411,4 +1460,74 @@ pre {
     }
 }
 
-/*
+/* Mobile-first table usability */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Compact layout for tablets/phones */
+@media (max-width: 768px) {
+    .page-title { font-size: 1.25rem; }
+    .admin-profile { padding: 0.5rem 0.75rem; }
+    .stat-card { padding: 1rem; }
+    .stat-info h3 { font-size: 1.5rem; }
+    .chart-container { padding: 1rem; }
+    .data-table th, .data-table td { white-space: normal; }
+}
+
+/* Aggressive column hiding on narrow phones */
+@media (max-width: 640px) {
+    /* Users: keep Name, Phone, Balance, Status, Actions */
+    #users-table th:nth-child(1), #users-table td:nth-child(1), /* ID */
+    #users-table th:nth-child(4), #users-table td:nth-child(4), /* Email */
+    #users-table th:nth-child(6), #users-table td:nth-child(6), /* Games */
+    #users-table th:nth-child(7), #users-table td:nth-child(7), /* Win Rate */
+    #users-table th:nth-child(8), #users-table td:nth-child(8), /* Winnings */
+    #users-table th:nth-child(9), #users-table td:nth-child(9)  /* Referrals */ { display: none; }
+
+    /* Referrals: keep Referrer, Total Referrals, Bonus, Actions */
+    #referrals-table th:nth-child(2), #referrals-table td:nth-child(2), /* Code */
+    #referrals-table th:nth-child(5), #referrals-table td:nth-child(5), /* Recent */
+    #referrals-table th:nth-child(6), #referrals-table td:nth-child(6)  /* Joined */ { display: none; }
+
+    /* Games: keep Type, Players, Entry Fee, Status, Actions */
+    #games-table th:nth-child(1), #games-table td:nth-child(1), /* Game ID */
+    #games-table th:nth-child(5), #games-table td:nth-child(5), /* Prize Pool */
+    #games-table th:nth-child(7), #games-table td:nth-child(7)  /* Created */ { display: none; }
+
+    /* Transactions: keep User, Amount, Status, Actions */
+    #transactions-table th:nth-child(1), #transactions-table td:nth-child(1), /* ID */
+    #transactions-table th:nth-child(3), #transactions-table td:nth-child(3), /* Type */
+    #transactions-table th:nth-child(6), #transactions-table td:nth-child(6)  /* Date */ { display: none; }
+
+    /* Withdrawals: keep User, Amount, Status, Actions */
+    #withdrawals-table th:nth-child(1), #withdrawals-table td:nth-child(1), /* ID */
+    #withdrawals-table th:nth-child(4), #withdrawals-table td:nth-child(4), /* Method */
+    #withdrawals-table th:nth-child(6), #withdrawals-table td:nth-child(6)  /* Date */ { display: none; }
+
+    /* Bots: keep Name, Status, Actions */
+    #bots-table th:nth-child(1), #bots-table td:nth-child(1), /* ID */
+    #bots-table th:nth-child(3), #bots-table td:nth-child(3), /* Games Played */
+    #bots-table th:nth-child(4), #bots-table td:nth-child(4), /* Win Rate */
+    #bots-table th:nth-child(6), #bots-table td:nth-child(6)  /* Last Active */ { display: none; }
+
+    /* Feedback: keep User, Message, Status, Actions */
+    #feedback-table th:nth-child(1), #feedback-table td:nth-child(1), /* ID */
+    #feedback-table th:nth-child(3), #feedback-table td:nth-child(3), /* Type */
+    #feedback-table th:nth-child(6), #feedback-table td:nth-child(6)  /* Date */ { display: none; }
+
+    /* Website data: rely on scroll and compact text */
+    #website-data-table .data-preview { font-size: 12px; }
+
+    /* Push notifications: keep Title, Status, Success/Total, Actions */
+    #notifications-table th:nth-child(1), #notifications-table td:nth-child(1), /* ID */
+    #notifications-table th:nth-child(3), #notifications-table td:nth-child(3), /* Type */
+    #notifications-table th:nth-child(4), #notifications-table td:nth-child(4), /* Target */
+    #notifications-table th:nth-child(7), #notifications-table td:nth-child(7)  /* Sent At */ { display: none; }
+
+    /* Updates: keep Version, Status, Actions */
+    #updates-table th:nth-child(2), #updates-table td:nth-child(2), /* Type */
+    #updates-table th:nth-child(3), #updates-table td:nth-child(3), /* Size */
+    #updates-table th:nth-child(4), #updates-table td:nth-child(4)  /* Published */ { display: none; }
+}

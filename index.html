@@ -7,7 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="additional-styles.css">
+    <link rel="stylesheet" href="admin-panel-fixes.css">
 </head>
 <body>
     <div class="admin-container">
@@ -64,6 +64,10 @@
                 <li class="menu-item" data-section="updates">
                     <i class="fas fa-download"></i>
                     <span>App Updates</span>
+                </li>
+                <li class="menu-item" data-section="push-notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>Push Notifications</span>
                 </li>
                 <li class="menu-item" data-section="settings">
                     <i class="fas fa-cog"></i>
@@ -714,6 +718,101 @@
                     </div>
                 </section>
 
+                <!-- Push Notifications Section -->
+                <section id="push-notifications" class="content-section">
+                    <div class="section-header">
+                        <h2>Push Notifications</h2>
+                        <button class="btn btn-primary" onclick="adminPanel.showSendNotificationModal()">
+                            <i class="fas fa-paper-plane"></i> Send Notification
+                        </button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-notifications">0</h3>
+                                <p>Total Notifications</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon games">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="sent-notifications">0</h3>
+                                <p>Sent Successfully</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="active-devices">0</h3>
+                                <p>Active Devices</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bots">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="pending-notifications">0</h3>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notification-controls">
+                        <div class="filter-controls">
+                            <select id="notification-type-filter">
+                                <option value="">All Types</option>
+                                <option value="GENERAL">General</option>
+                                <option value="GAME_INVITE">Game Invite</option>
+                                <option value="GAME_RESULT">Game Result</option>
+                                <option value="WALLET_UPDATE">Wallet Update</option>
+                                <option value="PROMOTIONAL">Promotional</option>
+                                <option value="SYSTEM_UPDATE">System Update</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                            </select>
+                            <select id="notification-status-filter">
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="SENDING">Sending</option>
+                                <option value="SENT">Sent</option>
+                                <option value="FAILED">Failed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="adminPanel.refreshNotifications()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="notifications-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Target</th>
+                                    <th>Status</th>
+                                    <th>Success/Total</th>
+                                    <th>Sent At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Notifications will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
                 <!-- Administration Section (Superadmin only) -->
                 <section id="administration" class="content-section" style="display:none;">
                     <div class="section-header">
@@ -735,9 +834,6 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- Admins will be loaded here -->
-                            </tbody>
                         </table>
                     </div>
                 </section>
@@ -825,23 +921,21 @@
 
     <!-- Mobile Overlay -->
     <div id="mobile-overlay" class="mobile-overlay"></div>
+    
+    <!-- Connection Status Indicator -->
+    <div id="connection-status" class="connection-status">
+        <i class="fas fa-wifi"></i>
+        <span>Connected</span>
+    </div>
 
     <!-- Loading Spinner -->
     <div id="loading" class="loading-overlay">
         <div class="spinner"></div>
     </div>
 
-    <!-- Load environment configuration first -->
+    <!-- Load environment configuration -->
     <script src="env-config.js"></script>
-    <!-- Load admin panel fix script -->
-    <script src="admin-panel-fix.js"></script>
-    <!-- Then load the main admin panel -->
-    <script src="admin-panel-complete.js"></script>
-    <!-- Load additional methods -->
-    <script src="admin-panel-methods.js"></script>
-    <!-- Load dashboard fix script -->
-    <script src="admin-panel-dashboard-fix.js"></script>
-    <!-- Load superadmin features -->
-    <script src="superadmin-features.js"></script>
+    <!-- Load the real admin panel connected to database -->
+    <script src="admin-panel-real.js"></script>
 </body>
 </html>
