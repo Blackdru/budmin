@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Dashboard - Budzee Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fraud-detection.css">
+</head>
+<body>
+    <div class="fraud-container">
+        <!-- Header -->
+        <header class="fraud-header">
+            <div class="header-left">
+                <h1><i class="fas fa-shield-alt"></i> Fraud Detection Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="alert-indicator" id="alert-indicator">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="alert-count">0</span>
+                </div>
+                <button class="btn btn-primary" onclick="fraudDashboard.refreshAll()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="fraud-stats-grid">
+            <div class="fraud-stat-card high-risk">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="high-risk-users">0</h3>
+                    <p>High Risk Users</p>
+                    <span class="stat-change" id="high-risk-change">+0</span>
+                </div>
+            </div>
+            <div class="fraud-stat-card blocked">
+                <div class="stat-icon">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="blocked-devices">0</h3>
+                    <p>Blocked Devices</p>
+                    <span class="stat-change" id="blocked-change">+0</span>
+                </div>
+            </div>
+            <div class="fraud-stat-card suspicious">
+                <div class="stat-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="suspicious-activities">0</h3>
+                    <p>Suspicious Activities</p>
+                    <span class="stat-change" id="suspicious-change">+0</span>
+                </div>
+            </div>
+            <div class="fraud-stat-card prevented">
+                <div class="stat-icon">
+                    <i class="fas fa-shield-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="prevented-frauds">0</h3>
+                    <p>Prevented Frauds</p>
+                    <span class="stat-change" id="prevented-change">+0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="fraud-content">
+            <!-- Tabs -->
+            <div class="fraud-tabs">
+                <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-btn" data-tab="logs">Fraud Logs</button>
+                <button class="tab-btn" data-tab="devices">Device Management</button>
+                <button class="tab-btn" data-tab="users">User Investigation</button>
+                <button class="tab-btn" data-tab="settings">Settings</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard-tab">
+                <div class="dashboard-grid">
+                    <!-- Real-time Alerts -->
+                    <div class="fraud-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bell"></i> Real-time Alerts</h3>
+                            <button class="btn btn-small" onclick="fraudDashboard.clearAlerts()">Clear All</button>
+                        </div>
+                        <div class="alerts-container" id="alerts-container">
+                            <!-- Alerts will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Risk Score Distribution -->
+                    <div class="fraud-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-pie"></i> Risk Score Distribution</h3>
+                        </div>
+                        <div class="risk-distribution" id="risk-distribution">
+                            <div class="risk-bar">
+                                <div class="risk-label">Low (0-30)</div>
+                                <div class="risk-progress low">
+                                    <div class="risk-fill" style="width: 0%" id="low-risk-bar"></div>
+                                </div>
+                                <div class="risk-count" id="low-risk-count">0</div>
+                            </div>
+                            <div class="risk-bar">
+                                <div class="risk-label">Medium (31-70)</div>
+                                <div class="risk-progress medium">
+                                    <div class="risk-fill" style="width: 0%" id="medium-risk-bar"></div>
+                                </div>
+                                <div class="risk-count" id="medium-risk-count">0</div>
+                            </div>
+                            <div class="risk-bar">
+                                <div class="risk-label">High (71-100)</div>
+                                <div class="risk-progress high">
+                                    <div class="risk-fill" style="width: 0%" id="high-risk-bar"></div>
+                                </div>
+                                <div class="risk-count" id="high-risk-count">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Threats -->
+                    <div class="fraud-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-exclamation-circle"></i> Top Threats</h3>
+                        </div>
+                        <div class="threats-list" id="threats-list">
+                            <!-- Threats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fraud Logs Tab -->
+            <div class="tab-content" id="logs-tab">
+                <div class="logs-controls">
+                    <div class="filters">
+                        <select id="log-type-filter">
+                            <option value="">All Types</option>
+                            <option value="SIGNUP_SUCCESS">Signup Success</option>
+                            <option value="LOGIN_SUCCESS">Login Success</option>
+                            <option value="HIGH_RISK_DEVICE">High Risk Device</option>
+                            <option value="MULTI_ACCOUNT_ATTEMPT">Multi Account</option>
+                            <option value="REFERRAL_FRAUD">Referral Fraud</option>
+                            <option value="BLOCKED_DEVICE_SIGNUP">Blocked Device</option>
+                            <option value="BLOCKED_IP_SIGNUP">Blocked IP</option>
+                        </select>
+                        <select id="log-status-filter">
+                            <option value="">All Status</option>
+                            <option value="FLAGGED">Flagged</option>
+                            <option value="BLOCKED">Blocked</option>
+                            <option value="INVESTIGATED">Investigated</option>
+                        </select>
+                        <input type="date" id="log-date-filter" placeholder="Filter by date">
+                        <button class="btn btn-primary" onclick="fraudDashboard.loadFraudLogs()">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                <div class="logs-table-container">
+                    <table class="fraud-table" id="fraud-logs-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Type</th>
+                                <th>Risk Score</th>
+                                <th>IP Address</th>
+                                <th>Device ID</th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Logs will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Device Management Tab -->
+            <div class="tab-content" id="devices-tab">
+                <div class="devices-controls">
+                    <div class="controls-left">
+                        <button class="btn btn-danger" onclick="fraudDashboard.showBlockDeviceModal()">
+                            <i class="fas fa-ban"></i> Block Device
+                        </button>
+                        <button class="btn btn-warning" onclick="fraudDashboard.showBlockIPModal()">
+                            <i class="fas fa-globe"></i> Block IP
+                        </button>
+                    </div>
+                    <div class="controls-right">
+                        <input type="text" id="device-search" placeholder="Search device or IP...">
+                        <button class="btn btn-primary" onclick="fraudDashboard.searchDevices()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="devices-grid">
+                    <div class="device-card">
+                        <h4>Blocked Devices</h4>
+                        <div class="device-list" id="blocked-devices-list">
+                            <!-- Blocked devices will be populated here -->
+                        </div>
+                    </div>
+                    <div class="device-card">
+                        <h4>Blocked IPs</h4>
+                        <div class="device-list" id="blocked-ips-list">
+                            <!-- Blocked IPs will be populated here -->
+                        </div>
+                    </div>
+                    <div class="device-card">
+                        <h4>Suspicious Devices</h4>
+                        <div class="device-list" id="suspicious-devices-list">
+                            <!-- Suspicious devices will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Investigation Tab -->
+            <div class="tab-content" id="users-tab">
+                <div class="investigation-controls">
+                    <div class="search-user">
+                        <input type="text" id="user-search" placeholder="Enter User ID or Phone Number">
+                        <button class="btn btn-primary" onclick="fraudDashboard.investigateUser()">
+                            <i class="fas fa-search"></i> Investigate
+                        </button>
+                    </div>
+                </div>
+                <div class="investigation-results" id="investigation-results">
+                    <!-- Investigation results will be populated here -->
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings-tab">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Risk Thresholds</h3>
+                        <div class="setting-item">
+                            <label>Low Risk Threshold (0-30)</label>
+                            <input type="range" id="low-threshold" min="0" max="30" value="30">
+                            <span id="low-threshold-value">30</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Medium Risk Threshold (31-70)</label>
+                            <input type="range" id="medium-threshold" min="31" max="70" value="70">
+                            <span id="medium-threshold-value">70</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>High Risk Threshold (71-100)</label>
+                            <input type="range" id="high-threshold" min="71" max="100" value="100">
+                            <span id="high-threshold-value">100</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="fraudDashboard.saveThresholds()">Save Thresholds</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Auto Actions</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="auto-block-high-risk"> Auto-block high risk devices
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="auto-flag-medium-risk"> Auto-flag medium risk activities
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="send-alerts"> Send real-time alerts
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" onclick="fraudDashboard.saveAutoActions()">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="fraud-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="fraud-modal-title">Modal Title</h3>
+                <button class="modal-close" onclick="fraudDashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="fraud-modal-body">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="env-config.js"></script>
+    <script src="fraud-detection.js"></script>
+</body>
+</html>

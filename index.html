@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="admin-panel-fixes.css">
+    <link rel="stylesheet" href="mobile-responsive.css">
 </head>
 <body>
     <div class="admin-container">
@@ -186,7 +187,6 @@
                                     <th>Email</th>
                                     <th>Balance</th>
                                     <th>Games</th>
-                                    <th>Win Rate</th>
                                     <th>Winnings</th>
                                     <th>Referrals</th>
                                     <th>Status</th>
@@ -935,7 +935,9 @@
 
     <!-- Load environment configuration -->
     <script src="env-config.js"></script>
-    <!-- Load the real admin panel connected to database -->
-    <script src="admin-panel-real.js"></script>
+    <!-- Load the fixed admin panel -->
+    <script src="admin-panel-fixed.js"></script>
+    <!-- Load fraud detection integration -->
+    <script src="fraud-integration.js"></script>
 </body>
 </html>
